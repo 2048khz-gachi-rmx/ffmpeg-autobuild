@@ -92,7 +92,20 @@ jobs:
           
       - name: Install pip dependencies
         run: sudo -H pip3 -qq install meson ninja
-        
+
+      - name: Read MinGW toolchain versions
+        id: toolchain
+        run: |
+          gcc_ver=$(grep -oE -- '--gcc-ver=[0-9.]+' cross_compile_ffmpeg.sh | head -1 | cut -d= -f2)
+          mingw_ver=$(grep -oE -- '--mingw-w64-ver=[0-9.]+' cross_compile_ffmpeg.sh | head -1 | cut -d= -f2)
+          echo "key=gcc${gcc_ver}-mingw${mingw_ver}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache MinGW cross-compiler
+        uses: actions/cache@v4
+        with:
+          path: sandbox/cross_compilers
+          key: mingw-cc-${{ matrix.os }}-${{ steps.toolchain.outputs.key }}
+
       - name: Get current FFmpeg git date
         id: git-date
         working-directory: ffmpeg-source
